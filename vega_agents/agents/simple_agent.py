@@ -22,7 +22,7 @@ market_depth = self.vega.market_depth(self.market_id, num_levels=5)
 
 ### Place a Limit Order
 self.vega.submit_order(
-    trading_wallet=self.wallet_name,
+    trading_key=self.key_name,
     market_id=self.market_id,
     order_type="TYPE_LIMIT",
     # https://docs.vega.xyz/docs/mainnet/grpc/vega/vega.proto#ordertimeinforce
@@ -37,7 +37,7 @@ self.vega.submit_order(
 
 ### Place a Market Order
 self.vega.submit_market_order(
-    trading_wallet=self.wallet_name,
+    trading_key=self.key_name,
     market_id=self.market_id,
     # https://docs.vega.xyz/docs/mainnet/grpc/vega/vega.proto#side
     side="SIDE_BUY",
@@ -51,7 +51,7 @@ self.vega.submit_market_order(
 
 ### Amend an Order
 self.vega.amend_order(
-    trading_wallet=self.wallet_name,
+    trading_key=self.key_name,
     market_id=self.market_id,
     order_id=order_to_amend_id,
     price=10.1,
@@ -60,14 +60,14 @@ self.vega.amend_order(
 
 ### Cancel an Order
 self.vega.cancel_order(
-    self.wallet_name,
+    self.key_name,
     self.market_id,
     order_id
 )
 
 ### Retrieve Current Position & PnL (Profit & Loss)
-positions = self.vega.positions_by_market(
-    wallet_name=self.wallet_name, market_id=self.market_id
+position = self.vega.positions_by_market(
+    key_name=self.key_name, market_id=self.market_id
 )
 if position is not None:
     volume = position.open_volume
@@ -76,14 +76,14 @@ if position is not None:
 
 ### Retrieve Current Orders
 orders = self.vega.orders_for_party_from_feed(
-    self.wallet_name,
+    self.key_name,
     self.market_id,
     live_only=True,  # set to False to also retrieve dead orders
 )
 
 ### Retrieve Account Balance
 curr_acct = self.party_account(
-    wallet_name=wallet_name, asset_id=asset, market_id=None
+    key_name=self.key_name, asset_id=self.asset_id, market_id=self.market_id
 )
 general_balance = curr_acct.general  # The balance not currently in use by the market
 margin_balance = curr_acct.margin  # The balance already being used as margin
@@ -93,15 +93,11 @@ margin_balance = curr_acct.margin  # The balance already being used as margin
 
 
 from vega_sim.service import VegaService
-from vega_agents.agents.learning_agent import (
-    LearningAgent,
-    LAMarketState,
-    AbstractAction,
-)
+from vega_sim.scenario.common.agents import StateAgentWithWallet
 from typing import List, Tuple
 
 
-class SimpleAgent(LearningAgent):
+class SimpleAgent(StateAgentWithWallet):
     def __init__(
         self,
         key_name: str,
@@ -138,6 +134,7 @@ class SimpleAgent(LearningAgent):
             amount=self.initial_balance,
         )
         self.vega.wait_fn(2)
+        self.last_mid = None
 
     def step(self, vega: VegaService):
         """This function is called once each loop through of the simulation.
@@ -151,7 +148,4 @@ class SimpleAgent(LearningAgent):
                 network itself. Use this to query for the current state of
                 the world
         """
-        pass
-
-    def update_memory(self, states: List[Tuple[LAMarketState, AbstractAction]]):
         pass

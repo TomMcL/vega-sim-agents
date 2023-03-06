@@ -25,7 +25,7 @@ def run_iteration(
         market_decimal=3,
         asset_decimal=5,
         market_position_decimal=2,
-        lp_commitamount=100000,
+        lp_commitamount=100_000,
         initial_asset_mint=1e8,
         step_length_seconds=1,
         block_length_seconds=1,
@@ -33,15 +33,16 @@ def run_iteration(
         sell_intensity=5,
         market_name=market_name,
         asset_name=asset_name,
-        num_steps=50,
+        num_steps=500,
         random_agent_ordering=False,
-        price_process_fn=lambda: get_historic_price_series(
-            product_id="ETH-USD", granularity=Granularity.HOUR
-        ).values,
-        sigma=100,
+        # price_process_fn=lambda: get_historic_price_series(
+        #     product_id="ETH-USD", granularity=Granularity.MINUTE
+        # ).values,
+        initial_price=1600,
+        sigma=1,
     )
 
-    scenario.agents = scenario.configure_agents(vega=vega, random_state=None)
+    scenario.agents = scenario.configure_agents(vega=vega, random_state=None, tag=None)
     # add the learning agaent to the environment's list of agents
     learning_agent.price_process = scenario.price_process
     scenario.agents["learner"] = learning_agent
@@ -74,14 +75,17 @@ if __name__ == "__main__":
 
     # create the Learning Agent
     agent = SimpleAgent(
-        wallet_name=LEARNING_WALLET.name,
+        key_name=LEARNING_WALLET.name,
         initial_balance=100_000,
         market_name=market_name,
         asset_name=asset_name,
     )
 
     with VegaServiceNull(
-        warn_on_raw_data_access=False, run_with_console=False, retain_log_files=True
+        warn_on_raw_data_access=False,
+        run_with_console=False,
+        retain_log_files=True,
+        check_for_binaries=True,
     ) as vega:
         _ = run_iteration(
             learning_agent=agent,
